@@ -74,10 +74,18 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
     if (hsd->Instance == SDMMC1)
     {
         PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SDMMC;
-        PeriphClkInitStruct.SdmmcClockSelection = RCC_SDMMCCLKSOURCE_PLL;
+        PeriphClkInitStruct.PLL2.PLL2M = 2;
+        PeriphClkInitStruct.PLL2.PLL2N = 100;
+        PeriphClkInitStruct.PLL2.PLL2P = 4;
+        PeriphClkInitStruct.PLL2.PLL2Q = 2;
+        PeriphClkInitStruct.PLL2.PLL2R = 16;
+        PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
+        PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
+        PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+        PeriphClkInitStruct.SdmmcClockSelection = RCC_SDMMCCLKSOURCE_PLL2;
         if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
         {
-            error("SDMMC MDMA Init error at %d in %s", __LINE__, __FILE__);
+            error("SDMMC clock Init error at %d in %s", __LINE__, __FILE__);
         }
 
         /* Peripheral clock enable */
@@ -93,8 +101,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
         PC12     ------> SDMMC1_CK
         PD2     ------> SDMMC1_CMD
         */
-        GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                            |GPIO_PIN_12;
+        GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12;
         GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
         GPIO_InitStruct.Pull = GPIO_NOPULL;
         GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
