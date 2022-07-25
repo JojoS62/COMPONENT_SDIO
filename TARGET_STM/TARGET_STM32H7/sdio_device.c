@@ -21,14 +21,12 @@
 /* Extern variables ---------------------------------------------------------*/
 
 SD_HandleTypeDef hsd;
-// DMA_HandleTypeDef hdma_sdmmc_rx;
-// DMA_HandleTypeDef hdma_sdmmc_tx;
 
 // simple flags for DMA pending signaling
 volatile uint8_t SD_DMA_ReadPendingState = SD_TRANSFER_OK;
 volatile uint8_t SD_DMA_WritePendingState = SD_TRANSFER_OK;
 
-void _SDMMC1_IRQHandler(void)
+static void _SDMMC1_IRQHandler(void)
 {
     HAL_SD_IRQHandler(&hsd);
 }
@@ -51,7 +49,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
         PeriphClkInitStruct.PLL2.PLL2N = 160;
         PeriphClkInitStruct.PLL2.PLL2P = 4;
         PeriphClkInitStruct.PLL2.PLL2Q = 8;
-        PeriphClkInitStruct.PLL2.PLL2R = 8;     // 64: 12.5 MHz  32: 25 MHz 16: 50 MHz
+        PeriphClkInitStruct.PLL2.PLL2R = 16;     // 64: 12.5 MHz  32: 25 MHz 16: 50 MHz
         PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_2;
         PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
         PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
@@ -90,85 +88,9 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
 
         // SDMMC1 interrupt Init
         IRQn = SDMMC1_IRQn;
-        HAL_NVIC_SetPriority(IRQn, 14, 0);
+        HAL_NVIC_SetPriority(IRQn, 0, 0);
         NVIC_SetVector(IRQn, (uint32_t)&_SDMMC1_IRQHandler);
         HAL_NVIC_EnableIRQ(IRQn);
-
-#if 0
-        /* MDMA controller clock enable */
-        __HAL_RCC_MDMA_CLK_ENABLE();
-        /* Local variables */
-
-        /* Configure MDMA channel MDMA_Channel0 */
-        /* Configure MDMA request hmdma_mdma_channel40_sdmmc1_command_end_0 on MDMA_Channel0 */
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Instance = MDMA_Channel0;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.Priority = MDMA_PRIORITY_LOW;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.SourceInc = MDMA_SRC_INC_BYTE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.DestinationInc = MDMA_DEST_INC_BYTE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.DataAlignment = MDMA_DATAALIGN_PACKENABLE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.BufferTransferLength = 1;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.SourceBlockAddressOffset = 0;
-        hmdma_mdma_channel40_sdmmc1_command_end_0.Init.DestBlockAddressOffset = 0;
-        if (HAL_MDMA_Init(&hmdma_mdma_channel40_sdmmc1_command_end_0) != HAL_OK)
-        {
-            error("SDMMC MDMA Init error at %d in %s", __LINE__, __FILE__);
-        }
-
-        /* Configure MDMA channel MDMA_Channel1 */
-        /* Configure MDMA request hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0 on MDMA_Channel1 */
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Instance = MDMA_Channel1;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.Priority = MDMA_PRIORITY_LOW;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.SourceInc = MDMA_SRC_INC_BYTE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.DestinationInc = MDMA_DEST_INC_BYTE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.DataAlignment = MDMA_DATAALIGN_PACKENABLE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.BufferTransferLength = 1;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.SourceBlockAddressOffset = 0;
-        hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0.Init.DestBlockAddressOffset = 0;
-        if (HAL_MDMA_Init(&hmdma_mdma_channel41_sdmmc1_dma_endbuffer_0) != HAL_OK)
-        {
-            error("SDMMC MDMA Init error at %d in %s", __LINE__, __FILE__);
-        }
-
-        /* Configure MDMA channel MDMA_Channel2 */
-        /* Configure MDMA request hmdma_mdma_channel42_sdmmc1_end_data_0 on MDMA_Channel2 */
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Instance = MDMA_Channel2;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.Priority = MDMA_PRIORITY_LOW;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.SourceInc = MDMA_SRC_INC_BYTE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.DestinationInc = MDMA_DEST_INC_BYTE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.DataAlignment = MDMA_DATAALIGN_PACKENABLE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.BufferTransferLength = 1;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.SourceBlockAddressOffset = 0;
-        hmdma_mdma_channel42_sdmmc1_end_data_0.Init.DestBlockAddressOffset = 0;
-        if (HAL_MDMA_Init(&hmdma_mdma_channel42_sdmmc1_end_data_0) != HAL_OK)
-        {
-            error("SDMMC MDMA Init error at %d in %s", __LINE__, __FILE__);
-        }
-
-        // MDMA interrupt Init
-        IRQn = MDMA_IRQn;
-        HAL_NVIC_SetPriority(IRQn, 0, 0);
-        NVIC_SetVector(IRQn, (uint32_t)&_MDMA_IRQHandler);
-        HAL_NVIC_EnableIRQ(IRQn);
-#endif
-
     }
     
 }
@@ -195,11 +117,6 @@ void HAL_SD_MspDeInit(SD_HandleTypeDef *hsd)
 
         HAL_GPIO_DeInit(GPIOD, GPIO_PIN_2);
     }
-
-
-    /* SDMMC DMA DeInit */
-    // HAL_DMA_DeInit(hsd->hdmarx);
-    // HAL_DMA_DeInit(hsd->hdmatx);
 }
 
 /**
@@ -226,28 +143,26 @@ uint8_t SD_Init(void)
 {
     uint8_t sd_state = MSD_OK;
 
-#ifdef TARGET_DISCO_F769NI
-    hsd.Instance = SDMMC2;
-#else
     hsd.Instance = SDMMC1;
-#endif
     hsd.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
     hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
-    hsd.Init.BusWide = SDMMC_BUS_WIDE_1B;
-    hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-    hsd.Init.ClockDiv = 3;
+    hsd.Init.BusWide = SDMMC_BUS_WIDE_4B;
+    hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
+    hsd.Init.ClockDiv = 1;          // SDMMC kernel clock / (1+1)
 
     /* HAL SD initialization */
     sd_state = HAL_SD_Init(&hsd);
-    /* Configure SD Bus width (4 bits mode selected) */
-    if (sd_state == MSD_OK)
-    {
-        /* Enable wide operation */
-        if (HAL_SD_ConfigWideBusOperation(&hsd, SDMMC_BUS_WIDE_4B) != HAL_OK)
-        {
-            sd_state = MSD_ERROR;
-        }
-    }
+
+    // This is executed already by HAL_SD_Init()
+    // /* Configure SD Bus width (4 bits mode selected) */
+    // if (sd_state == MSD_OK)
+    // {
+    //     /* Enable wide operation */
+    //     if (HAL_SD_ConfigWideBusOperation(&hsd, SDMMC_BUS_WIDE_4B) != HAL_OK)
+    //     {
+    //         sd_state = MSD_ERROR;
+    //     }
+    // }
 
     return sd_state;
 }
