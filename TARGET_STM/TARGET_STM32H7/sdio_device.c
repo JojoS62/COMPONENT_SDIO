@@ -45,11 +45,11 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
     if (hsd->Instance == SDMMC1)
     {
         PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SDMMC;
-        PeriphClkInitStruct.PLL2.PLL2M = 5;         // 400 MHz
-        PeriphClkInitStruct.PLL2.PLL2N = 160;
+        PeriphClkInitStruct.PLL2.PLL2M = 5;         // 25 MHz / 5 = 5 MHz
+        PeriphClkInitStruct.PLL2.PLL2N = 160;       // 5 MHz * 160 = 800 MHz
         PeriphClkInitStruct.PLL2.PLL2P = 4;
         PeriphClkInitStruct.PLL2.PLL2Q = 8;
-        PeriphClkInitStruct.PLL2.PLL2R = 16;     // 64: 12.5 MHz  32: 25 MHz 16: 50 MHz
+        PeriphClkInitStruct.PLL2.PLL2R = 16;        // 64: 12.5 MHz  32: 25 MHz 16: 50 MHz
         PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_2;
         PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
         PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
@@ -88,7 +88,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
 
         // SDMMC1 interrupt Init
         IRQn = SDMMC1_IRQn;
-        HAL_NVIC_SetPriority(IRQn, 0, 0);
+        HAL_NVIC_SetPriority(IRQn, 0, 0);   // 0: highest prio, 15 lowest
         NVIC_SetVector(IRQn, (uint32_t)&_SDMMC1_IRQHandler);
         HAL_NVIC_EnableIRQ(IRQn);
     }
@@ -145,24 +145,14 @@ uint8_t SD_Init(void)
 
     hsd.Instance = SDMMC1;
     hsd.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
-    hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
+    hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_ENABLE;
+    // hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
     hsd.Init.BusWide = SDMMC_BUS_WIDE_4B;
-    hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
+    hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
     hsd.Init.ClockDiv = 1;          // SDMMC kernel clock / (1+1)
 
     /* HAL SD initialization */
     sd_state = HAL_SD_Init(&hsd);
-
-    // This is executed already by HAL_SD_Init()
-    // /* Configure SD Bus width (4 bits mode selected) */
-    // if (sd_state == MSD_OK)
-    // {
-    //     /* Enable wide operation */
-    //     if (HAL_SD_ConfigWideBusOperation(&hsd, SDMMC_BUS_WIDE_4B) != HAL_OK)
-    //     {
-    //         sd_state = MSD_ERROR;
-    //     }
-    // }
 
     return sd_state;
 }
@@ -236,6 +226,10 @@ uint8_t SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks
  */
 uint8_t SD_ReadBlocks_DMA(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks)
 {
+    if ((uint32_t)pData & 0x1f) {
+        return MSD_ERROR;
+    }
+
     uint8_t sd_state = MSD_OK;
     SD_DMA_ReadPendingState = SD_TRANSFER_BUSY;
 
@@ -258,6 +252,13 @@ uint8_t SD_ReadBlocks_DMA(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBloc
  */
 uint8_t SD_WriteBlocks_DMA(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks)
 {
+    if ((uint32_t)pData & 0x1f) {
+        return MSD_ERROR;
+    }
+
+    // Ensure the data is flushed to main memory
+    SCB_CleanDCache_by_Addr(pData, NumOfBlocks * 512);      // Todo: use real blocksize
+
     uint8_t sd_state = MSD_OK;
     SD_DMA_WritePendingState = SD_TRANSFER_BUSY;
 
