@@ -49,7 +49,7 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
         PeriphClkInitStruct.PLL2.PLL2N = 160;       // 5 MHz * 160 = 800 MHz
         PeriphClkInitStruct.PLL2.PLL2P = 4;
         PeriphClkInitStruct.PLL2.PLL2Q = 8;
-        PeriphClkInitStruct.PLL2.PLL2R = 16;        // 64: 12.5 MHz  32: 25 MHz 16: 50 MHz
+        PeriphClkInitStruct.PLL2.PLL2R = 4;        // 64: 12.5 MHz  32: 25 MHz 16: 50 MHz   8: 100 MHz  4: 200 MHz
         PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_2;
         PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOWIDE;
         PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
@@ -149,7 +149,7 @@ uint8_t SD_Init(void)
     // hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
     hsd.Init.BusWide = SDMMC_BUS_WIDE_4B;
     hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
-    hsd.Init.ClockDiv = 1;          // SDMMC kernel clock / (1+1)
+    hsd.Init.ClockDiv = 2;          // SDMMC kernel clock / (2 * 2) = 50 MHz
 
     /* HAL SD initialization */
     sd_state = HAL_SD_Init(&hsd);
@@ -226,10 +226,6 @@ uint8_t SD_WriteBlocks(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks
  */
 uint8_t SD_ReadBlocks_DMA(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks)
 {
-    if ((uint32_t)pData & 0x1f) {
-        return MSD_ERROR;
-    }
-
     uint8_t sd_state = MSD_OK;
     SD_DMA_ReadPendingState = SD_TRANSFER_BUSY;
 
@@ -252,10 +248,6 @@ uint8_t SD_ReadBlocks_DMA(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBloc
  */
 uint8_t SD_WriteBlocks_DMA(uint32_t *pData, uint32_t WriteAddr, uint32_t NumOfBlocks)
 {
-    if ((uint32_t)pData & 0x1f) {
-        return MSD_ERROR;
-    }
-
     // Ensure the data is flushed to main memory
     SCB_CleanDCache_by_Addr(pData, NumOfBlocks * 512);      // Todo: use real blocksize
 
