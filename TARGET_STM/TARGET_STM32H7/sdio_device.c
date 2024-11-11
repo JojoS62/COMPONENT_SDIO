@@ -376,5 +376,5 @@ void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd)
 
 void HAL_SD_ErrorCallback(SD_HandleTypeDef *hsd)
 {
-    printf("SD_Error\n");
+    MBED_ERROR(MBED_MAKE_CUSTOM_ERROR(MBED_MODULE_HAL, -1), "HAL_SD_ErrorCallback");
 }
