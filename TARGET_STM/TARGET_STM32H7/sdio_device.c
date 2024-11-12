@@ -86,6 +86,9 @@ void HAL_SD_MspInit(SD_HandleTypeDef *hsd)
         GPIO_InitStruct.Alternate = GPIO_AF12_SDIO1;
         HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+        __HAL_RCC_SDMMC1_FORCE_RESET();
+        __HAL_RCC_SDMMC1_RELEASE_RESET();
+
         // SDMMC1 interrupt Init
         IRQn = SDMMC1_IRQn;
         HAL_NVIC_SetPriority(IRQn, 0, 0);   // 0: highest prio, 15 lowest
@@ -145,15 +148,21 @@ uint8_t SD_Init(void)
 
     hsd.Instance = SDMMC1;
     hsd.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
-    hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_ENABLE;
+    hsd.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
     hsd.Init.BusWide = SDMMC_BUS_WIDE_4B;
-    hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_ENABLE;
+    hsd.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
     hsd.Init.ClockDiv = 2;          // SDMMC kernel clock / (2 * 2) = 50 MHz
 
     /* HAL SD initialization */
     sd_state = HAL_SD_Init(&hsd);
+    if (sd_state != HAL_OK) {
+        MBED_ERROR(MBED_MAKE_CUSTOM_ERROR(MBED_MODULE_HAL, -1), "HAL_SD_Init failed");
+    }
 
     sd_state = HAL_SD_ConfigSpeedBusOperation(&hsd, SDMMC_SPEED_MODE_AUTO);
+    if (sd_state != HAL_OK) {
+        MBED_ERROR(MBED_MAKE_CUSTOM_ERROR(MBED_MODULE_HAL, -1), "HAL_SD_ConfigSpeedBusOperation failed");
+    }
 
    
     return sd_state;
@@ -384,7 +393,6 @@ void HAL_SD_TxCpltCallback(SD_HandleTypeDef *hsd)
   */
 void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd)
 {
-      //BSP_SD_AbortCallback();
 }
 
 void HAL_SD_ErrorCallback(SD_HandleTypeDef *hsd)
