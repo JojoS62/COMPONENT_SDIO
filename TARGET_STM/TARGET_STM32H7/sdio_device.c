@@ -241,7 +241,7 @@ uint8_t SD_ReadBlocks_DMA(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBloc
     SD_DMA_ReadPendingState = SD_TRANSFER_BUSY;
 
     if ((uint32_t)pData & 3) {
-        __BKPT(0);
+        // __BKPT(0);
     }
 
     /*
