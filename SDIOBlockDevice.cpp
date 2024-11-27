@@ -59,7 +59,7 @@ namespace mbed
 #define MBED_CONF_SD_TIMEOUT (30 * 1000) /* ms */
 #endif
 
-constexpr auto delayTime = 2ms;
+constexpr auto delayTime = 0ms;
 
 SDIOBlockDevice::SDIOBlockDevice(PinName cardDetect) : _cardDetect(cardDetect),
                                                        _is_initialized(0),
