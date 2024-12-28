@@ -198,11 +198,10 @@ uint8_t SD_DeInit(void)
  */
 uint8_t SD_ReadBlocks(uint32_t *pData, uint32_t ReadAddr, uint32_t NumOfBlocks, uint32_t Timeout)
 {
-    uint8_t sd_state = MSD_OK;
+    uint8_t sd_state = MSD_ERROR;
 
-    if (HAL_SD_ReadBlocks(&hsd, (uint8_t *)pData, ReadAddr, NumOfBlocks, Timeout) != HAL_OK)
-    {
-        sd_state = MSD_ERROR;
+    while (sd_state != MSD_OK) {
+        sd_state = SD_ReadBlocks(pData, ReadAddr, NumOfBlocks, Timeout);
     }
 
     return sd_state;
@@ -397,5 +396,6 @@ void HAL_SD_AbortCallback(SD_HandleTypeDef *hsd)
 
 void HAL_SD_ErrorCallback(SD_HandleTypeDef *hsd)
 {
-    MBED_ERROR(MBED_MAKE_CUSTOM_ERROR(MBED_MODULE_HAL, -1), "HAL_SD_ErrorCallback");
+    SD_DMA_WritePendingState = SD_TRANSFER_OK;
+    // MBED_ERROR(MBED_MAKE_CUSTOM_ERROR(MBED_MODULE_HAL, -1), "HAL_SD_ErrorCallback");
 }
